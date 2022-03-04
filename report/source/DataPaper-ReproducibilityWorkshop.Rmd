@@ -131,15 +131,13 @@ The CSV file contains the data of the first sheet of the mastersheet (root/data/
 
 The dataset contains data of 144 participants. Participants did not have formal psychological or economic education, were 18--40 years old, non-smokers and did not take medication that could have influenced their corticosteroid levels. Women were not taking oral contraceptives. Similar to previous studies, participants had to refrain from drinking alcohol and sexual activities for 24 h, from caffeine for four hours and from eating/drinking (except water) for two hours prior to the beginning of the experiment.
 
-![Fig. 1 provides an exact overview of the experimental timeline for each measure we collected. All experimental sessions took place from 3 p.m. to 6 p.m. to control for circadian variations of hormonal levels. Participants were assigned to the two experimental conditions pseudo-randomly.](fig/Fig1.jpg)Fig. 1 provides an exact overview of the experimental timeline for each measure we collected. All experimental sessions took place from 3 p.m. to 6 p.m. to control for circadian variations of hormonal levels. Participants were assigned to the two experimental conditions pseudo-randomly.
+![Fig. 1 provides an exact overview of the experimental timeline for each measure we collected. All experimental sessions took place from 3 p.m. to 6 p.m. to control for circadian variations of hormonal levels. Participants were assigned to the two experimental conditions pseudo-randomly.](fig/Fig1.jpg)
 
 Our food-choice task was administered following a 2 × 3 mixed-factorial design with Experimental Group (stress vs. control) as between-subject factor and Measurement (Baseline, Early, Late) as within-subject factor. We deployed a standard food-choice task similar to the one used by @harbaugh2001 and @chung2017 . In each trial, participants chose one out of a set of two to seven snack bundles. Each snack bundle consisted of specific amounts of a sweet or salty snack and a fruit or vegetable (see [Fig. 2]). The choice set was defined by all integer combinations of sweet or salty snack and fruit or vegetable on the budget-line. The budget-line was given by the following formula:
 
 $Amount (fruit/vegetable) = - px/py Amount (sweet/salty) + m/py$
 
-(**FIXME6**)
-
-[Fig.2 displays the choice sets of 4 example trials of the food-choice task. The economic parameters for these were for A: m = 4, px = 1, py = 1; for B: m = 2, px = 2, py = 1; for C: m = 2, px = 1, py = 2; for D: m = 5, px = 1, py = 1. The available snack bundles are then given by all integer combinations of both snack types along the budgetline. The budgetline is given by the formula:]
+![Fig.2 displays the choice sets of 4 example trials of the food-choice task. The economic parameters for these were for A: m = 4, px = 1, py = 1; for B: m = 2, px = 2, py = 1; for C: m = 2, px = 1, py = 2; for D: m = 5, px = 1, py = 1. The available snack bundles are then given by all integer combinations of both snack types along the budgetline. The budgetline is given by the formula: $Amount (fruit/vegetable) = - px/py Amount (sweet/salty) + m/py$](fig/Fig2.jpg)
 
 At each of the three measurements, participants had to make decisions in 11 trials. The economic parameters ("px", "py", "m") of the 11 trials for each time point were randomly sampled from a collection of 22 possible parameter combinations (see file root/data/foodchoice_budgetlines.csv). The snacks for both categories were similarly attractive according to the previously provided online ratings of the participants (see file root/data/online_data_cleaned.xlsx). The sampling procedure was implemented to reduce interdependency of the answers of each participant for subsequent time points, while keeping the presented bundle size out of satiation range. At the end of the experiment, one trial was randomly selected for each participant, and their choice in that trial was implemented, i.e., participants received their chosen snack bundle. The experimental task was presented via PsychoPy @peirce2007. For 8 participants (out of N = 144 participants), no or incomplete food-choice data were saved due to a technical failure of the experimental hardware.
 
@@ -149,7 +147,63 @@ We collected saliva samples with Salivette devices (Sarstedt, Germany) that cons
 
 ## Preview of Research Results
 
-FIXME add Fig 3 - heart rate analysis
+```{r fig3-heartrate, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE, fig.cap="Fig. 3: Mean heart rate of stress and control groups at baseline and during intervention."}
+
+library(tidyverse)
+library(BayesFactor)
+
+#Read data
+df <- read.csv("../../output/data/preprocessed-GARP-TSST-data.csv", 
+               encoding = "UTF-8")
+
+#Convert df to long-format
+df_long <- df %>%
+  pivot_longer(cols = c(HR_Baseline_Average, HR_TSST_Average),
+               names_to = "Measurement",
+               values_to = "HR")
+
+#Drop missing values
+df_long <- df_long %>% drop_na(HR)
+
+#Make sure columns are coded as factors for analysis
+df_long$VPN <- as.factor(df_long$VPN)
+df_long$Measurement <- as.factor(df_long$Measurement)
+df_long$Condition <- as.factor(df_long$Condition)
+
+#Bayesian Analysis
+BF <- anovaBF(formula = HR ~ Measurement*Condition + VPN,
+              data = df_long,
+              whichRandom = "VPN")
+
+#Evidence for interaction term
+BF_interaction <- BF[4]/BF[3]
+
+BF_interaction
+
+#Summarize to mean / SEM for plot
+df_long2 <- df_long %>%
+  group_by(Measurement, Condition) %>%
+  summarize(mean_value = mean(HR, na.rm = T),
+            sem = sd(HR, na.rm = T)/sqrt(n()))
+
+#Create plot
+plot <- ggplot(df_long2, aes(Measurement, mean_value, group = Condition, color = Condition)) +
+  geom_pointrange(aes(ymin=mean_value-sem, ymax= mean_value+sem)) +
+  geom_line() +
+  theme_classic() +
+  scale_x_discrete(labels = c("Baseline",
+                              "TSST-G/Control")) +
+  ylab("Mean Heartrate (BPM)") +
+  scale_colour_grey(start = 0.5, end = 0.2) +
+  theme(legend.position = "top")
+
+#Print and save plots  
+plot
+
+#ggsave("output/plots/heartrate.pdf", plot, width = 4, height = 3)
+```
+
+
 
 FIXME add Fig 4: Cortisol and Amylase levels in stress and control groups
 
