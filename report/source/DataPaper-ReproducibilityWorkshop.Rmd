@@ -6,7 +6,30 @@ output:
   html_document:
     df_print: paged
 bibliography: references.bib
+csl: apa.csl
+nocite: |
+  @peirce2007
 ---
+
+```{r setup, message=FALSE, warning=FALSE, echo=FALSE, include=FALSE}
+
+# set working directory and global options
+knitr::opts_knit$set(root.dir = rprojroot::find_rstudio_root_file())
+
+knitr::opts_chunk$set(message=FALSE, warning=FALSE, echo=FALSE, results = FALSE)
+```
+
+```{r libraries-data, echo=FALSE}
+
+library(tidyverse)
+library(BayesFactor)
+library(patchwork)
+
+#Read data
+df <- read.csv("output/data/preprocessed-GARP-TSST-data.csv", encoding = "UTF-8")
+
+bronars_simulation_data <- read.csv("data/bronars_simulation_data.csv")
+```
 
 Citation to original version of this data article:
 
@@ -113,8 +136,6 @@ Description: contains all 22 possible economic parameter combinations which were
 
 File: root/data/bronars_simulation_data.csv (\_raw data\_)
 
-`r bronars_simulation_data <- read.csv("../../data/bronars_simulation_data.csv")`
-
 The CSV file contains choice consistency data for `r nrow(bronars_simulation_data)` simulated participants, that have been used to determine the power of our food-choice task design to detect choice consistency violations, which averaged `r mean(bronars_simulation_data$violation_count)`. Simulated participants solved one measurement (11 trials) of the food-choice task (see Experimental Design, Materials & Methods). Simulated choices were uniform-random among the choice sets. Column 1 and 2 ("filename", "VP") are redundant and contain the participant IDs. Column 3 ("Session") indicates the number of measurements (always 1 here). Column 4 ("violation_count") indicates the number of trials involved in a revealed preference inconsistency [see 2]. Column 5 ("AI") contains the critical cost efficiency index @nitsch2020a; ,@afriat1972. Column 6 ("mean_RT") contains the mean reaction times (arbitrary). Typically, users of the data will only use the information in column 4 and 5 ("violation_count", "AI").
 
 File: root/data/foodchoice_data/CC-\$VPN\_\$Measurement_data.csv (\_raw data\_)
@@ -148,13 +169,6 @@ We collected saliva samples with Salivette devices (Sarstedt, Germany) that cons
 ## Preview of Research Results
 
 ```{r fig3-heartrate, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE, fig.cap="Fig. 3: Mean heart rate of stress and control groups at baseline and during intervention."}
-
-library(tidyverse)
-library(BayesFactor)
-
-#Read data
-df <- read.csv("../../output/data/preprocessed-GARP-TSST-data.csv", 
-               encoding = "UTF-8")
 
 #Convert df to long-format
 df_long <- df %>%
@@ -203,9 +217,18 @@ plot
 #ggsave("output/plots/heartrate.pdf", plot, width = 4, height = 3)
 ```
 
+```{r fig4-cortisol, echo=FALSE, message=FALSE, warning=FALSE, results=FALSE, fig.cap="Fig. 4: Cortisol and Amylase levels in stress and control groups."}
 
+# run code from code directory instead of copy/pasting
+# relative path problems...solution: change global Knitr options (knit from project directory - but this creates problems for collaborators who have diff. global IDE settings)
+# solution: load all lib, data, global settings up front (top setup code chunks)
 
-FIXME add Fig 4: Cortisol and Amylase levels in stress and control groups
+source("code/02_hormone_analysis.R", local= knitr::knit_global())
+
+# display
+plot
+
+```
 
 All analyses were conducted in R[^1] in the RStudio IDE[^2] using the packages Tidyverse (**add citation here**), stringi[^3], BayesFactor[^4] and patchwork[^5].
 
@@ -228,6 +251,7 @@ All participants gave their informed written consent before participation. The s
 Felix Jan Nitsch: Conceptualization, Methodology, Software, Validation, Formal Analysis, Investigation, Data Curation, Writing - Original draft preparation, Project Administration; Manuala Sellitto: Data curation, Writing - Review & Editing, Supervision; Tobias Kalenscher: Conceptualization, Resources, Writing - Review & Editing, Supervision, Funding Acquisition.
 
 \
+@kirschbaum2007
 
 ## Declaration of Competing Interest
 
